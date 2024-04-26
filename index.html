@@ -4,11 +4,53 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Local Chat</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+    }
+    #chat-box {
+        width: 400px;
+        margin: 20px auto;
+        background-color: #fff;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        overflow-y: scroll;
+        max-height: 300px;
+    }
+    .message {
+        margin-bottom: 10px;
+    }
+    .message strong {
+        color: #007bff;
+    }
+    input[type="text"] {
+        width: calc(100% - 70px);
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px 0 0 5px;
+    }
+    button {
+        width: 70px;
+        padding: 8px 0;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 0 5px 5px 0;
+        cursor: pointer;
+    }
+</style>
 </head>
 <body>
     <div id="chat-box"></div>
-    <input type="text" id="message-input" placeholder="Type your message...">
-    <button id="send-button">Send</button>
+    <div style="display: flex;">
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button id="send-button">Send</button>
+    </div>
 
     <script>
         var ws = new WebSocket("ws://localhost:8080");
@@ -16,7 +58,11 @@
         ws.onmessage = function(event) {
             var messageData = JSON.parse(event.data);
             var messageBox = document.getElementById("chat-box");
-            messageBox.innerHTML += "<strong>" + messageData.username + ":</strong> " + messageData.message + "<br>";
+            var messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.innerHTML = "<strong>" + messageData.username + ":</strong> " + messageData.message;
+            messageBox.appendChild(messageElement);
+            messageBox.scrollTop = messageBox.scrollHeight;
         };
 
         document.getElementById("send-button").addEventListener("click", function() {
@@ -29,6 +75,13 @@
                 };
                 ws.send(JSON.stringify(messageData));
                 messageInput.value = "";
+            }
+        });
+
+        // Press Enter to send message
+        document.getElementById("message-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                document.getElementById("send-button").click();
             }
         });
     </script>
