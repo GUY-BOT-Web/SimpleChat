@@ -1,62 +1,101 @@
-const http = require('http');
-const fs = require('fs');
-const { parse } = require('querystring');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSE Chat</title>
+<style>
+    #chat-box {
+        height: 200px;
+        overflow-y: scroll;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+</style>
+</head>
+<body>
+    <div id="chat-box"></div>
+    <input type="text" id="message-input" placeholder="Type your message...">
+    <button id="send-button" disabled>Send</button>
+    <button id="start-button">Start</button>
+    <button id="stop-button">Stop</button>
 
-// Create an HTTP server
-const server = http.createServer((req, res) => {
-  if (req.url === '/send-message' && req.method === 'POST') {
-    // Handle incoming message
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString(); // Convert buffer to string
-    });
-    req.on('end', () => {
-      const messageData = parse(body); // Parse message data
-      const message = JSON.stringify({ message: messageData.message });
-      // Broadcast message to all clients
-      res.writeHead(200, {
-        'Content-Type': 'text/plain',
-        'Access-Control-Allow-Origin': '*'
-      });
-      res.end('Message received');
-      broadcast(message);
-    });
-  } else {
-    // Set the content type to text/event-stream for SSE
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*'
-    });
+    <script>
+        const chatBox = document.getElementById("chat-box");
+        const messageInput = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
+        const startButton = document.getElementById("start-button");
+        const stopButton = document.getElementById("stop-button");
+        let eventSource;
 
-    // Send a comment to keep the connection alive
-    res.write(': keep-alive\n\n');
+        // Function to handle SSE messages
+        const handleSSEMessage = (event) => {
+            const data = JSON.parse(event.data);
+            const message = `Server Time: ${data.time}`;
+            const messageElement = document.createElement("div");
+            messageElement.textContent = message;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
+        };
 
-    // Function to send messages at regular intervals
-    const sendMessage = () => {
-      const message = JSON.stringify({ time: new Date().toLocaleTimeString() });
-      res.write(`data: ${message}\n\n`);
-    };
+        // Function to start SSE connection
+        const startSSE = () => {
+            if (!eventSource) {
+                eventSource = new EventSource("http://localhost:8080");
+                eventSource.addEventListener("message", handleSSEMessage);
+                eventSource.onerror = (error) => {
+                    console.error("SSE Error:", error);
+                    eventSource.close();
+                    sendButton.disabled = true; // Disable send button if SSE connection fails
+                };
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                sendButton.disabled = false; // Enable send button after SSE connection is established
+            }
+        };
 
-    // Send messages every second
-    const intervalId = setInterval(sendMessage, 1000);
+        // Function to stop SSE connection
+        const stopSSE = () => {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+                sendButton.disabled = true; // Disable send button when SSE connection is stopped
+            }
+        };
 
-    // When the client closes the connection, clear the interval
-    req.on('close', () => {
-      clearInterval(intervalId);
-    });
-  }
-});
+        // Function to send message
+        const sendMessage = () => {
+            const message = messageInput.value.trim();
+            if (message !== "") {
+                fetch("http://localhost:8080/send-message", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ message })
+                })
+                .then(() => {
+                    messageInput.value = ""; // Clear message input after sending
+                })
+                .catch((error) => {
+                    console.error("Error sending message:", error);
+                });
+            }
+        };
 
-// Function to broadcast messages to all connected clients
-const broadcast = (message) => {
-  server.connections.forEach((connection) => {
-    connection.write(message);
-  });
-};
-
-// Listen on port 8080
-server.listen(8080, () => {
-  console.log('SSE server running on port 8080');
-});
+        // Add event listeners for buttons and message input
+        startButton.addEventListener("click", startSSE);
+        stopButton.addEventListener("click", stopSSE);
+        sendButton.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keyup", (event) => {
+            sendButton.disabled = event.target.value.trim() === ""; // Disable send button if message input is empty
+            if (event.key === "Enter" && !sendButton.disabled) {
+                sendMessage(); // Send message when Enter key is pressed and input is not empty
+            }
+        });
+    </script>
+</body>
+</html>
