@@ -7,9 +7,14 @@
 </head>
 <body>
     <div id="chat-box"></div>
+    <button id="start-button">Start</button>
+    <button id="stop-button">Stop</button>
 
     <script>
         const chatBox = document.getElementById("chat-box");
+        const startButton = document.getElementById("start-button");
+        const stopButton = document.getElementById("stop-button");
+        let eventSource;
 
         // Function to handle SSE messages
         const handleSSEMessage = (event) => {
@@ -20,17 +25,33 @@
             chatBox.appendChild(messageElement);
         };
 
-        // Create a new EventSource to listen for SSE messages
-        const eventSource = new EventSource("http://localhost:8080");
-
-        // Add event listener for messages
-        eventSource.addEventListener("message", handleSSEMessage);
-
-        // Handle connection errors
-        eventSource.onerror = (error) => {
-            console.error("SSE Error:", error);
-            eventSource.close();
+        // Function to start SSE connection
+        const startSSE = () => {
+            if (!eventSource) {
+                eventSource = new EventSource("http://localhost:8080");
+                eventSource.addEventListener("message", handleSSEMessage);
+                eventSource.onerror = (error) => {
+                    console.error("SSE Error:", error);
+                    eventSource.close();
+                };
+                startButton.disabled = true;
+                stopButton.disabled = false;
+            }
         };
+
+        // Function to stop SSE connection
+        const stopSSE = () => {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
+        };
+
+        // Add event listeners for buttons
+        startButton.addEventListener("click", startSSE);
+        stopButton.addEventListener("click", stopSSE);
     </script>
 </body>
 </html>
