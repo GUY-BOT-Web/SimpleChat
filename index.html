@@ -4,14 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SSE Chat</title>
+<style>
+    #chat-box {
+        height: 200px;
+        overflow-y: scroll;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        padding: 10px;
+    }
+</style>
 </head>
 <body>
     <div id="chat-box"></div>
+    <input type="text" id="message-input" placeholder="Type your message...">
+    <button id="send-button" disabled>Send</button>
     <button id="start-button">Start</button>
     <button id="stop-button">Stop</button>
 
     <script>
         const chatBox = document.getElementById("chat-box");
+        const messageInput = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
         const startButton = document.getElementById("start-button");
         const stopButton = document.getElementById("stop-button");
         let eventSource;
@@ -23,6 +36,7 @@
             const messageElement = document.createElement("div");
             messageElement.textContent = message;
             chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
         };
 
         // Function to start SSE connection
@@ -33,9 +47,11 @@
                 eventSource.onerror = (error) => {
                     console.error("SSE Error:", error);
                     eventSource.close();
+                    sendButton.disabled = true; // Disable send button if SSE connection fails
                 };
                 startButton.disabled = true;
                 stopButton.disabled = false;
+                sendButton.disabled = false; // Enable send button after SSE connection is established
             }
         };
 
@@ -46,12 +62,32 @@
                 eventSource = null;
                 startButton.disabled = false;
                 stopButton.disabled = true;
+                sendButton.disabled = true; // Disable send button when SSE connection is stopped
             }
         };
 
-        // Add event listeners for buttons
+        // Function to send message
+        const sendMessage = () => {
+            const message = messageInput.value.trim();
+            if (message !== "") {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", "http://localhost:8080/send-message");
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.send(JSON.stringify({ message }));
+                messageInput.value = ""; // Clear message input after sending
+            }
+        };
+
+        // Add event listeners for buttons and message input
         startButton.addEventListener("click", startSSE);
         stopButton.addEventListener("click", stopSSE);
+        sendButton.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keyup", (event) => {
+            sendButton.disabled = event.target.value.trim() === ""; // Disable send button if message input is empty
+            if (event.key === "Enter" && !sendButton.disabled) {
+                sendMessage(); // Send message when Enter key is pressed and input is not empty
+            }
+        });
     </script>
 </body>
 </html>
