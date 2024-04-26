@@ -15,15 +15,20 @@
 
         ws.onmessage = function(event) {
             console.log('Received: ', event.data);
+            var messageData = JSON.parse(event.data);
             var messageBox = document.getElementById("chat-box");
-            messageBox.innerHTML += event.data + "<br>";
+            messageBox.innerHTML += "<strong>" + messageData.username + ":</strong> " + messageData.message + "<br>";
         };
 
         document.getElementById("send-button").addEventListener("click", function() {
             var messageInput = document.getElementById("message-input");
             var message = messageInput.value.trim();
             if (message !== "") {
-                ws.send(message);
+                var messageData = {
+                    username: "anonymous",
+                    message: message
+                };
+                ws.send(JSON.stringify(messageData));
                 messageInput.value = "";
             }
         });
