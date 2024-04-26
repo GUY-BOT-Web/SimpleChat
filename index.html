@@ -57,9 +57,7 @@
 <body>
     <div class="container">
         <button id="start-button">Start?</button>
-        <div id="chat-box">
-            <!-- Chat box content goes here -->
-        </div>
+        <div id="chat-box"></div>
         <div style="display: flex;">
             <input type="text" id="message-input" placeholder="Type your message...">
             <button id="send-button">Send</button>
@@ -70,16 +68,14 @@
         var ws;
 
         document.getElementById("start-button").addEventListener("click", function() {
-            startServer();
-            document.getElementById("start-button").style.display = "none";
-            document.getElementById("chat-box").style.display = "block";
-        });
-
-        function startServer() {
+            // Establish WebSocket connection
             ws = new WebSocket("ws://localhost:8080");
 
+            // WebSocket event handlers
             ws.onopen = function() {
                 console.log("WebSocket connection established.");
+                // Show chat box
+                document.getElementById("chat-box").style.display = "block";
             };
 
             ws.onmessage = function(event) {
@@ -92,26 +88,38 @@
                 messageBox.scrollTop = messageBox.scrollHeight;
             };
 
-            document.getElementById("send-button").addEventListener("click", function() {
-                var messageInput = document.getElementById("message-input");
-                var message = messageInput.value.trim();
-                if (message !== "") {
-                    var messageData = {
-                        username: "anonymous",
-                        message: message
-                    };
-                    ws.send(JSON.stringify(messageData));
-                    messageInput.value = "";
-                }
-            });
+            ws.onerror = function(event) {
+                console.error("WebSocket error:", event);
+            };
 
-            // Press Enter to send message
-            document.getElementById("message-input").addEventListener("keypress", function(event) {
-                if (event.key === "Enter") {
-                    document.getElementById("send-button").click();
-                }
-            });
-        }
+            ws.onclose = function() {
+                console.log("WebSocket connection closed.");
+            };
+
+            // Hide the "Start?" button
+            document.getElementById("start-button").style.display = "none";
+        });
+
+        // Send message
+        document.getElementById("send-button").addEventListener("click", function() {
+            var messageInput = document.getElementById("message-input");
+            var message = messageInput.value.trim();
+            if (message !== "") {
+                var messageData = {
+                    username: "anonymous",
+                    message: message
+                };
+                ws.send(JSON.stringify(messageData));
+                messageInput.value = "";
+            }
+        });
+
+        // Press Enter to send message
+        document.getElementById("message-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                document.getElementById("send-button").click();
+            }
+        });
     </script>
 </body>
 </html>
