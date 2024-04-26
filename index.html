@@ -20,6 +20,7 @@
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     #chat-box {
+        display: none; /* Initially hidden */
         height: 300px;
         overflow-y: scroll;
         margin-bottom: 20px;
@@ -43,19 +44,22 @@
         border-radius: 5px 0 0 5px;
     }
     button {
-        width: 70px;
+        width: 100%;
         padding: 8px 0;
         background-color: #007bff;
         color: #fff;
         border: none;
-        border-radius: 0 5px 5px 0;
+        border-radius: 5px;
         cursor: pointer;
     }
 </style>
 </head>
 <body>
     <div class="container">
-        <div id="chat-box"></div>
+        <button id="start-button">Start?</button>
+        <div id="chat-box">
+            <!-- Chat box content goes here -->
+        </div>
         <div style="display: flex;">
             <input type="text" id="message-input" placeholder="Type your message...">
             <button id="send-button">Send</button>
@@ -63,37 +67,51 @@
     </div>
 
     <script>
-        var ws = new WebSocket("ws://localhost:8080");
+        var ws;
 
-        ws.onmessage = function(event) {
-            var messageData = JSON.parse(event.data);
-            var messageBox = document.getElementById("chat-box");
-            var messageElement = document.createElement("div");
-            messageElement.classList.add("message");
-            messageElement.innerHTML = "<strong>" + messageData.username + ":</strong> " + messageData.message;
-            messageBox.appendChild(messageElement);
-            messageBox.scrollTop = messageBox.scrollHeight;
-        };
-
-        document.getElementById("send-button").addEventListener("click", function() {
-            var messageInput = document.getElementById("message-input");
-            var message = messageInput.value.trim();
-            if (message !== "") {
-                var messageData = {
-                    username: "anonymous",
-                    message: message
-                };
-                ws.send(JSON.stringify(messageData));
-                messageInput.value = "";
-            }
+        document.getElementById("start-button").addEventListener("click", function() {
+            startServer();
+            document.getElementById("start-button").style.display = "none";
+            document.getElementById("chat-box").style.display = "block";
         });
 
-        // Press Enter to send message
-        document.getElementById("message-input").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                document.getElementById("send-button").click();
-            }
-        });
+        function startServer() {
+            ws = new WebSocket("ws://localhost:8080");
+
+            ws.onopen = function() {
+                console.log("WebSocket connection established.");
+            };
+
+            ws.onmessage = function(event) {
+                var messageData = JSON.parse(event.data);
+                var messageBox = document.getElementById("chat-box");
+                var messageElement = document.createElement("div");
+                messageElement.classList.add("message");
+                messageElement.innerHTML = "<strong>" + messageData.username + ":</strong> " + messageData.message;
+                messageBox.appendChild(messageElement);
+                messageBox.scrollTop = messageBox.scrollHeight;
+            };
+
+            document.getElementById("send-button").addEventListener("click", function() {
+                var messageInput = document.getElementById("message-input");
+                var message = messageInput.value.trim();
+                if (message !== "") {
+                    var messageData = {
+                        username: "anonymous",
+                        message: message
+                    };
+                    ws.send(JSON.stringify(messageData));
+                    messageInput.value = "";
+                }
+            });
+
+            // Press Enter to send message
+            document.getElementById("message-input").addEventListener("keypress", function(event) {
+                if (event.key === "Enter") {
+                    document.getElementById("send-button").click();
+                }
+            });
+        }
     </script>
 </body>
 </html>
