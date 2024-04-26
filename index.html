@@ -58,11 +58,17 @@
             var messageBox = document.getElementById("message-box");
             var messageInput = document.getElementById("message-input");
             var sendButton = document.getElementById("send-button");
+            var ws = new WebSocket("ws://localhost:8080");
+
+            ws.onmessage = function(event) {
+                appendMessage("Friend", event.data);
+            };
 
             sendButton.addEventListener("click", function() {
                 var message = messageInput.value.trim();
                 if (message !== "") {
                     appendMessage("You", message);
+                    ws.send(message);
                     messageInput.value = "";
                 }
             });
