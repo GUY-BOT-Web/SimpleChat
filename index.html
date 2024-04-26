@@ -3,123 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Local Chat</title>
-<style>
-    body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f5f5f5;
-    }
-    .container {
-        max-width: 500px;
-        margin: 20px auto;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    #chat-box {
-        display: none; /* Initially hidden */
-        height: 300px;
-        overflow-y: scroll;
-        margin-bottom: 20px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-    .message {
-        margin-bottom: 10px;
-        padding: 8px;
-        border-radius: 5px;
-        background-color: #f0f0f0;
-    }
-    .message strong {
-        color: #007bff;
-    }
-    input[type="text"] {
-        width: calc(100% - 70px);
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 5px 0 0 5px;
-    }
-    button {
-        width: 100%;
-        padding: 8px 0;
-        background-color: #007bff;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-</style>
+<title>SSE Chat</title>
 </head>
 <body>
-    <div class="container">
-        <button id="start-button">Start?</button>
-        <div id="chat-box"></div>
-        <div style="display: flex;">
-            <input type="text" id="message-input" placeholder="Type your message...">
-            <button id="send-button">Send</button>
-        </div>
-    </div>
+    <div id="chat-box"></div>
 
     <script>
-        var ws;
+        const chatBox = document.getElementById("chat-box");
 
-        document.getElementById("start-button").addEventListener("click", function() {
-            // Establish WebSocket connection
-            ws = new WebSocket("ws://localhost:8080");
+        // Function to handle SSE messages
+        const handleSSEMessage = (event) => {
+            const data = JSON.parse(event.data);
+            const message = `Server Time: ${data.time}`;
+            const messageElement = document.createElement("div");
+            messageElement.textContent = message;
+            chatBox.appendChild(messageElement);
+        };
 
-            // WebSocket event handlers
-            ws.onopen = function() {
-                console.log("WebSocket connection established.");
-                // Show chat box
-                document.getElementById("chat-box").style.display = "block";
-            };
+        // Create a new EventSource to listen for SSE messages
+        const eventSource = new EventSource("http://localhost:8080");
 
-            ws.onmessage = function(event) {
-                var messageData = JSON.parse(event.data);
-                var messageBox = document.getElementById("chat-box");
-                var messageElement = document.createElement("div");
-                messageElement.classList.add("message");
-                messageElement.innerHTML = "<strong>" + messageData.username + ":</strong> " + messageData.message;
-                messageBox.appendChild(messageElement);
-                messageBox.scrollTop = messageBox.scrollHeight;
-            };
+        // Add event listener for messages
+        eventSource.addEventListener("message", handleSSEMessage);
 
-            ws.onerror = function(event) {
-                console.error("WebSocket error:", event);
-            };
-
-            ws.onclose = function() {
-                console.log("WebSocket connection closed.");
-            };
-
-            // Hide the "Start?" button
-            document.getElementById("start-button").style.display = "none";
-        });
-
-        // Send message
-        document.getElementById("send-button").addEventListener("click", function() {
-            var messageInput = document.getElementById("message-input");
-            var message = messageInput.value.trim();
-            if (message !== "") {
-                var messageData = {
-                    username: "anonymous",
-                    message: message
-                };
-                ws.send(JSON.stringify(messageData));
-                messageInput.value = "";
-            }
-        });
-
-        // Press Enter to send message
-        document.getElementById("message-input").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") {
-                document.getElementById("send-button").click();
-            }
-        });
+        // Handle connection errors
+        eventSource.onerror = (error) => {
+            console.error("SSE Error:", error);
+            eventSource.close();
+        };
     </script>
 </body>
 </html>
