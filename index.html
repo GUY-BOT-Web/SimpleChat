@@ -11,19 +11,27 @@
         padding: 0;
         background-color: #f5f5f5;
     }
-    #chat-box {
-        width: 400px;
+    .container {
+        max-width: 500px;
         margin: 20px auto;
+        padding: 20px;
         background-color: #fff;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    #chat-box {
+        height: 300px;
+        overflow-y: scroll;
+        margin-bottom: 20px;
+        padding: 10px;
         border: 1px solid #ccc;
         border-radius: 5px;
-        padding: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        overflow-y: scroll;
-        max-height: 300px;
     }
     .message {
         margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 5px;
+        background-color: #f0f0f0;
     }
     .message strong {
         color: #007bff;
@@ -46,10 +54,12 @@
 </style>
 </head>
 <body>
-    <div id="chat-box"></div>
-    <div style="display: flex;">
-        <input type="text" id="message-input" placeholder="Type your message...">
-        <button id="send-button">Send</button>
+    <div class="container">
+        <div id="chat-box"></div>
+        <div style="display: flex;">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
     </div>
 
     <script>
