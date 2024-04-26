@@ -14,7 +14,6 @@
         var ws = new WebSocket("ws://localhost:8080");
 
         ws.onmessage = function(event) {
-            console.log('Received: ', event.data);
             var messageData = JSON.parse(event.data);
             var messageBox = document.getElementById("chat-box");
             messageBox.innerHTML += "<strong>" + messageData.username + ":</strong> " + messageData.message + "<br>";
