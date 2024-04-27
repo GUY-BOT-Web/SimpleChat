@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleChat</title>
+    <style>
+        /* Your CSS styles */
+    </style>
+</head>
+<body>
+    <div id="chat-window">
+        <div id="chat-messages"></div>
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button id="send-button">Send</button>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js"></script>
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtezxsckPJZzPATkCkDGhqAggAWCzqQSs",
+            authDomain: "simplechatbyfunsparktv.firebaseapp.com",
+            projectId: "simplechatbyfunsparktv",
+            storageBucket: "simplechatbyfunsparktv.appspot.com",
+            messagingSenderId: "192279446256",
+            appId: "1:192279446256:web:59492c164d52c6f0a86529"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // Get a reference to the database service
+        const database = firebase.database();
+
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const chatMessages = document.getElementById('chat-messages');
+
+        // Function to send a message
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message !== '') {
+                database.ref('messages').push({
+                    text: message,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
+                messageInput.value = '';
+            }
+        }
+
+        // Event listener for the send button
+        sendButton.addEventListener('click', sendMessage);
+
+        // Listen for new messages in the database
+        database.ref('messages').on('child_added', snapshot => {
+            const message = snapshot.val();
+            const messageElement = document.createElement('div');
+            messageElement.innerText = message.text;
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
+    </script>
+</body>
+</html>
