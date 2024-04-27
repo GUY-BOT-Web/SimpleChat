@@ -5,49 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SimpleChat</title>
     <style>
-        /* Your CSS styles */
         body {
             font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         #chat-window {
-            max-width: 400px;
-            margin: 20px auto;
-            padding: 20px;
             background-color: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         #chat-messages {
-            max-height: 300px;
+            flex: 1;
             overflow-y: auto;
-            margin-bottom: 10px;
             padding: 10px;
-            border: 1px solid #ddd;
             border-radius: 6px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
         }
 
         #message-input {
-            width: calc(100% - 80px);
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 6px 0 0 6px;
             outline: none;
+            flex: 1;
         }
 
         #send-button {
-            width: 80px;
-            padding: 10px;
+            padding: 10px 20px;
             background-color: #007bff;
             border: none;
             border-radius: 0 6px 6px 0;
             color: #fff;
             cursor: pointer;
             outline: none;
+            transition: background-color 0.3s ease;
         }
 
         #send-button:hover {
@@ -58,51 +63,51 @@
 <body>
     <div id="chat-window">
         <div id="chat-messages"></div>
-        <input type="text" id="message-input" placeholder="Type your message...">
-        <button id="send-button">Send</button>
+        <div style="display: flex;">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-button">Send</button>
+        </div>
     </div>
-    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database.js"></script>
-    <script>
-        // Initialize Firebase
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-database.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyAtezxsckPJZzPATkCkDGhqAggAWCzqQSs",
             authDomain: "simplechatbyfunsparktv.firebaseapp.com",
             projectId: "simplechatbyfunsparktv",
+            storageBucket: "simplechatbyfunsparktv.appspot.com",
             messagingSenderId: "192279446256",
-            appId: "1:192279446256:web:59492c164d52c6f0a86529"
+            appId: "1:192279446256:web:fd3b11ececae773400b835",
+            measurementId: "G-LJYK1H3KRH"
         };
 
-        firebase.initializeApp(firebaseConfig);
-
-        // Get a reference to the database service
-        const database = firebase.database();
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
         const messageInput = document.getElementById('message-input');
         const sendButton = document.getElementById('send-button');
         const chatMessages = document.getElementById('chat-messages');
 
-        // Function to send a message
-        function sendMessage() {
+        sendButton.addEventListener('click', () => {
             const message = messageInput.value.trim();
             if (message !== '') {
-                database.ref('messages').push({
+                push(ref(database, 'messages'), {
                     text: message,
-                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                    timestamp: Date.now()
                 });
                 messageInput.value = '';
             }
-        }
+        });
 
-        // Event listener for the send button
-        sendButton.addEventListener('click', sendMessage);
-
-        // Listen for new messages in the database
-        database.ref('messages').on('child_added', snapshot => {
-            const message = snapshot.val();
-            const messageElement = document.createElement('div');
-            messageElement.innerText = message.text;
-            chatMessages.appendChild(messageElement);
+        onValue(ref(database, 'messages'), (snapshot) => {
+            chatMessages.innerHTML = '';
+            snapshot.forEach((childSnapshot) => {
+                const message = childSnapshot.val();
+                const messageElement = document.createElement('div');
+                messageElement.textContent = message.text;
+                chatMessages.appendChild(messageElement);
+            });
             chatMessages.scrollTop = chatMessages.scrollHeight;
         });
     </script>
