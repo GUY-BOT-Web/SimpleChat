@@ -12,14 +12,12 @@ const server = http.createServer((req, res) => {
     });
     req.on('end', () => {
       const messageData = parse(body); // Parse message data
-      const message = JSON.stringify({ message: messageData.message });
-      // Broadcast message to all clients
+      console.log('Received message:', messageData.message);
       res.writeHead(200, {
         'Content-Type': 'text/plain',
         'Access-Control-Allow-Origin': '*'
       });
       res.end('Message received');
-      broadcast(message);
     });
   } else {
     // Set the content type to text/event-stream for SSE
@@ -48,13 +46,6 @@ const server = http.createServer((req, res) => {
     });
   }
 });
-
-// Function to broadcast messages to all connected clients
-const broadcast = (message) => {
-  server.connections.forEach((connection) => {
-    connection.write(message);
-  });
-};
 
 // Listen on port 8080
 server.listen(8080, () => {
